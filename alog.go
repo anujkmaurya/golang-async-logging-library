@@ -42,7 +42,7 @@ func (al Alog) Start() {
 	// var wg *sync.WaitGroup
 	for {
 		msg := <-al.msgCh
-		al.write(msg, nil)
+		go al.write(msg, nil)
 
 	}
 
@@ -56,9 +56,13 @@ func (al Alog) formatMessage(msg string) string {
 }
 
 func (al Alog) write(msg string, wg *sync.WaitGroup) {
+	defer func(al Alog) {
+		al.m.Unlock()
+	}(al)
+
 	al.m.Lock()
 	_, err := al.Write(msg)
-	al.m.Unlock()
+
 	if err != nil {
 		go func(err error) {
 			al.errorCh <- err
